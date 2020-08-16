@@ -103,6 +103,8 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/ui-lightness/jquery-ui.css" />
 </head>
 
 <body>
@@ -161,6 +163,10 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
                 <input type='button' value='-' onclick="$(\'#edu${countEdu}\').remove();return false;"></p>
                 <p>School: <input class='school' size=80 type='text' name='edu_school${countEdu}'></input></p></div>`
             );
+
+            $('.school').autocomplete({
+                source: "school.php"
+            });
         });
     });
 </script>
