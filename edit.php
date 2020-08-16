@@ -6,8 +6,8 @@ if (!isset($_SESSION["name"])) {
     die("User not logged in");
 }
 
-$stmt = $pdo->prepare("select profile_id, first_name, last_name, headline, email, summary from profile where profile_id=:pid");
-$stmt->execute(array(":pid" => $_GET["profile_id"]));
+$stmt = $pdo->prepare("select profile_id, first_name, last_name, headline, email, summary from profile where profile_id=:pid and user_id=:uid");
+$stmt->execute(array(":pid" => $_GET["profile_id"], ":uid" => $_SESSION["user_id"]));
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 if ($row === false) {
     $_SESSION['error'] = 'Bad value for profile_id';
