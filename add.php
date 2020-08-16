@@ -34,6 +34,23 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
             }
         }
 
+        for ($i = 1; $i <= 9; $i++) {
+            if (!isset($_POST['edu_year' . $i])) continue;
+            if (!isset($_POST['edu_school' . $i])) continue;
+            $year = $_POST['year' . $i];
+            $desc = $_POST['desc' . $i];
+            if (strlen($year) == 0 || strlen($desc) == 0) {
+                $_SESSION["fail"] = "All fields are required";
+                header("Location: add.php");
+                return;
+            }
+            if (!is_numeric($year)) {
+                $_SESSION["fail"] = "Year must be numeric";
+                header("Location: add.php");
+                return;
+            }
+        }
+
         if (strpos($_POST["email"], "@") !== false) {
             $stmt = $pdo->prepare("insert into profile(user_id, first_name, last_name, email, headline, summary) values(:id, :fn, :ln, :em, :hd, :sm);");
             $stmt->execute(array(
@@ -103,6 +120,8 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
             <p>Email: <input type="text" name="email" size="30" /></p>
             <p>Headline: <br /><input type="text" name="headline" size="80" /></p>
             <p>Summary: <br /><textarea name="summary" cols="80" rows="8"></textarea>
+                <p>Education: <input type="submit" value="+" id="addEdu"></p>
+                <div id="education_fields"></div>
                 <p>Position: <input type="submit" value="+" id="addPos"></p>
                 <div id="position_fields"></div>
                 <p><input type="submit" value="Add"> <input type="submit" name="cancel" value="Cancel"></p>
@@ -114,6 +133,7 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
 
 <script>
     countPos = 0;
+    countEdu = 0;
     $(document).ready(function() {
         $("#addPos").click(function(event) {
             event.preventDefault();
@@ -126,6 +146,20 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
                 `<div id="position${countPos}"><p>Year: <input type='text' name='year${countPos}' value="" /> 
                 <input type='button' value='-' onclick="$(\'#position${countPos}\').remove();return false;"></p>
                 <textarea name='desc${countPos}' rows='8' cols='80'></textarea></div>`
+            );
+        });
+
+        $("#addEdu").click(function(event) {
+            event.preventDefault();
+            if (countEdu >= 9) {
+                alert("Maximum of nine Education entries exceeded");
+                return;
+            }
+            countEdu++;
+            $("#education_fields").append(
+                `<div id="edu${countEdu}"><p>Year: <input type='text' name='edu_year${countEdu}' value="" /> 
+                <input type='button' value='-' onclick="$(\'#edu${countEdu}\').remove();return false;"></p>
+                <p>School: <input class='school' size=80 type='text' name='edu_school${countEdu}'></input></p></div>`
             );
         });
     });
