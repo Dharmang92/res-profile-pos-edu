@@ -84,23 +84,23 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
             $rank = 1;
             for ($i = 1; $i <= 9; $i++) {
                 if (isset($_POST['edu_year' . $i]) && isset($_POST['edu_school' . $i])) {
-                    $stmt = $pdo->prepare('SELECT * FROM institution WHERE name = :n');
+                    $stmt = $pdo->prepare("SELECT * FROM institution WHERE name = :n");
                     $stmt->execute(array(':n' => $_POST['edu_school' . $i]));
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     if ($row === false) {
-                        $stmt = $pdo->prepare('INSERT INTO institution (name) VALUES (:name)');
+                        $stmt = $pdo->prepare("INSERT INTO institution (name) VALUES (:name)");
                         $stmt->execute(array(':name' => $_POST['edu_school' . $i]));
                         $iid = $pdo->lastInsertId();
                     } else {
                         $iid = $row['institution_id'];
                     }
 
-                    $stmt = $pdo->prepare('INSERT INTO education VALUES ( :pid, :iid, :rank, :year)');
+                    $stmt = $pdo->prepare("INSERT INTO education VALUES ( :pid, :iid, :rank, :year)");
                     $stmt->execute(array(
                         ':pid' => $profile_id,
                         ':iid' => $iid,
                         ':rank' => $rank,
-                        ':year' => htmlentities($_POST['edu_year' . $i])
+                        ':year' => $_POST['edu_year' . $i]
                     ));
                     $rank++;
                 }

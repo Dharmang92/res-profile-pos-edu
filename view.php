@@ -38,6 +38,14 @@ session_start();
                 echo "<p>Headline: " . htmlentities($row["headline"]) . "</p>";
                 echo "<p>Summary: " . htmlentities($row["summary"]) . "</p>";
 
+                echo "<p>Education</p><ul>";
+                $stmt = $pdo->prepare("select year, name from education join institution on education.institution_id=institution.institution_id where profile_id=:pid order by rank;");
+                $stmt->execute(array(":pid" => $_GET["profile_id"]));
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    echo "<li>" . htmlentities($row["year"]) . ": " . htmlentities($row["name"]) . "</li>";
+                }
+                echo "</ul>";
+
                 echo "<p>Position</p><ul>";
                 $stmt = $pdo->prepare("select year, description from position where profile_id=:pid order by rank;");
                 $stmt->execute(array(":pid" => $_GET["profile_id"]));
