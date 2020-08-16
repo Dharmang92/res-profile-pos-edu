@@ -49,6 +49,23 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
             }
         }
 
+        for ($i = 1; $i <= 9; $i++) {
+            if (!isset($_POST['edu_year' . $i])) continue;
+            if (!isset($_POST['edu_school' . $i])) continue;
+            $year = $_POST['edu_year' . $i];
+            $school = $_POST['edu_school' . $i];
+            if (strlen($year) == 0 || strlen($school) == 0) {
+                $_SESSION["fail"] = "All fields are required";
+                header("Location: edit.php?profile_id=" . $_POST["profile_id"]);
+                return;
+            }
+            if (!is_numeric($year)) {
+                $_SESSION["fail"] = "Year must be numeric";
+                header("Location: edit.php?profile_id=" . $_POST["profile_id"]);
+                return;
+            }
+        }
+
         if (strpos($_POST["email"], "@") !== false) {
             $stmt = $pdo->prepare("update profile set first_name=:fn, last_name=:ln, email=:em, headline=:hd, summary=:sm where profile_id=:pid;");
             $stmt->execute(array(
@@ -63,7 +80,6 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
             $profile_id = $_POST["profile_id"];
             $stmt = $pdo->prepare("DELETE FROM Position WHERE profile_id=:pid");
             $stmt->execute(array(':pid' => $_GET['profile_id']));
-
 
             $rank = 1;
             for ($i = 1; $i <= 9; $i++) {
@@ -80,6 +96,35 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
                     ':desc' => $desc
                 ));
                 $rank++;
+            }
+
+            $profile_id = $_POST["profile_id"];
+            $stmt = $pdo->prepare("DELETE FROM education WHERE profile_id=:pid");
+            $stmt->execute(array(':pid' => $_GET['profile_id']));
+
+            $rank = 1;
+            for ($i = 1; $i <= 9; $i++) {
+                if (isset($_POST['edu_year' . $i]) && isset($_POST['edu_school' . $i])) {
+                    $stmt = $pdo->prepare("SELECT * FROM institution WHERE name = :n");
+                    $stmt->execute(array(':n' => $_POST['edu_school' . $i]));
+                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($row === false) {
+                        $stmt = $pdo->prepare("INSERT INTO institution (name) VALUES (:name)");
+                        $stmt->execute(array(':name' => $_POST['edu_school' . $i]));
+                        $iid = $pdo->lastInsertId();
+                    } else {
+                        $iid = $row['institution_id'];
+                    }
+
+                    $stmt = $pdo->prepare("INSERT INTO education VALUES ( :pid, :iid, :rank, :year)");
+                    $stmt->execute(array(
+                        ':pid' => $profile_id,
+                        ':iid' => $iid,
+                        ':rank' => $rank,
+                        ':year' => $_POST['edu_year' . $i]
+                    ));
+                    $rank++;
+                }
             }
 
             $_SESSION["success"] = "Profile edited";
@@ -124,23 +169,40 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
             <p>Email: <input type="text" name="email" size="30" value="<?= $e ?>" /></p>
             <p>Headline: <br /><input type="text" name="headline" size="80" value="<?= $h ?>" /></p>
             <p>Summary: <br /><textarea name="summary" cols="80" rows="8"><?= $s ?></textarea>
-                <input type="hidden" name="profile_id" value="<?= $id ?>" />
-                <p>Position: <input type="submit" value="+" id="addPos"></p>
-                <div id="position_fields">
+                <p>Education: <input type="submit" value="+" id="addEdu"></p>
+                <div id="education_fields">
                     <?php
-                    $count = 0;
-                    $stmt = $pdo->prepare("SELECT year, description FROM position WHERE profile_id = :pid");
+                    $countEdu = 0;
+                    $stmt = $pdo->prepare("select year, name from education join institution on education.institution_id=institution.institution_id where profile_id=:pid order by rank;");
                     $stmt->execute(array(':pid' => $_GET['profile_id']));
                     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                        $count++;
-                        echo '<div id="position' . $count . '">' . "\n";
-                        echo '<p>Year: <input type="text" value="' . htmlentities($row['year']) . '" name="year' . $count . '"> ';
-                        echo '<input type="button" value="-" onclick="$(\'#position' . $count . '\').remove();">' . "</p>\n";
-                        echo '<p><textarea name="desc' . $count . '" rows="8" cols="80">' . htmlentities($row['description']) . '</textarea></p>';
+                        $countEdu++;
+                        echo '<div id="edu' . $countEdu . '">' . "\n";
+                        echo '<p>Year: <input type="text" value="' . htmlentities($row['year']) . '" name="year' . $countEdu . '"> ';
+                        echo '<input type="button" value="-" onclick="$(\'#edu' . $countEdu . '\').remove();">' . "</p>\n";
+                        echo '<p><input class="school" size=80 type="text" name="edu_school' . $countEdu . '"' . "value='" . htmlentities($row["name"]) . '"'  . '/></p>';
                         echo "</div>\n";
                     }
                     ?>
                 </div>
+
+                <p>Position: <input type="submit" value="+" id="addPos"></p>
+                <div id="position_fields">
+                    <?php
+                    $countPos = 0;
+                    $stmt = $pdo->prepare("SELECT year, description FROM position WHERE profile_id = :pid");
+                    $stmt->execute(array(':pid' => $_GET['profile_id']));
+                    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        $countPos++;
+                        echo '<div id="position' . $countPos . '">' . "\n";
+                        echo '<p>Year: <input type="text" value="' . htmlentities($row['year']) . '" name="year' . $countPos . '"> ';
+                        echo '<input type="button" value="-" onclick="$(\'#position' . $countPos . '\').remove();">' . "</p>\n";
+                        echo '<p><textarea name="desc' . $countPos . '" rows="8" cols="80">' . htmlentities($row['description']) . '</textarea></p>';
+                        echo "</div>\n";
+                    }
+                    ?>
+                </div>
+                <input type="hidden" name="profile_id" value="<?= $id ?>" />
                 <p><input type="submit" value="Save"> <input type="submit" name="cancel" value="Cancel"></p>
         </form>
     </div>
@@ -149,7 +211,8 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
 </html>
 
 <script>
-    countPos = <?= $count ?>;
+    countPos = <?= $countPos ?>;
+    countEdu = <?= $countEdu ?>;
     $(document).ready(function() {
         $("#addPos").click(function(event) {
             event.preventDefault();
@@ -163,6 +226,24 @@ if (isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["e
                 <input type='button' value='-' onclick="$(\'#position${countPos}\').remove();return false;"></p>
                 <textarea name='desc${countPos}' rows='8' cols='80'></textarea></div>`
             );
+        });
+
+        $("#addEdu").click(function(event) {
+            event.preventDefault();
+            if (countEdu >= 9) {
+                alert("Maximum of nine Education entries exceeded");
+                return;
+            }
+            countEdu++;
+            $("#education_fields").append(
+                `<div id="edu${countEdu}"><p>Year: <input type='text' name='edu_year${countEdu}' value="" /> 
+                <input type='button' value='-' onclick="$(\'#edu${countEdu}\').remove();return false;"></p>
+                <p>School: <input class='school' size=80 type='text' name='edu_school${countEdu}'></input></p></div>`
+            );
+
+            $('.school').autocomplete({
+                source: "school.php"
+            });
         });
     });
 </script>
